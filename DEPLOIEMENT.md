@@ -1,26 +1,25 @@
 # Déploiement sur Hostinger (hébergement mutualisé)
 
-SenTravail est une application **Node.js / Express**. Sur Hostinger, elle tourne dans la section **Web App (Node.js)**, disponible uniquement sur les plans **Business** et **Cloud** (pas sur Single ni Premium).
+SenTravail est une application **Node.js / Express** avec une base **MySQL Hostinger**. Elle tourne dans la section **Web App (Node.js)**, disponible uniquement sur les plans **Business** et **Cloud** (pas sur Single ni Premium).
 
-L'hébergement mutualisé ne fournit pas MongoDB : la base de données est sur **MongoDB Atlas** (gratuit pour démarrer).
+Les tables sont créées **automatiquement** au démarrage de l'application. Il n'y a rien à faire dans phpMyAdmin.
 
 ---
 
-## 1. Créer la base MongoDB Atlas
+## 1. Créer la base MySQL
 
-1. Créer un compte sur https://www.mongodb.com/cloud/atlas et un cluster **M0 (gratuit)**. Région conseillée : **Europe (Paris ou Francfort)**, la plus proche du Sénégal et des serveurs Hostinger.
-2. **Database Access** → ajouter un utilisateur (ex. `sentravail`) avec un mot de passe fort et le rôle *Read and write to any database*.
-3. **Network Access** → *Add IP Address* → `0.0.0.0/0`. L'IP d'un hébergement mutualisé n'est pas fixe : c'est le mot de passe qui protège la base.
-4. **Connect** → *Drivers* → copier l'adresse, puis ajouter le nom de la base après `.net/` :
-   ```
-   mongodb+srv://sentravail:MOTDEPASSE@cluster0.xxxxx.mongodb.net/sentravail?retryWrites=true&w=majority
-   ```
+1. hPanel → **Sites web** → **Gérer** → **Bases de données** → **Gestion**.
+2. Renseigner le nom de la base, le nom d'utilisateur et un mot de passe fort → **Créer**.
+3. Noter les valeurs **complètes, avec le préfixe** (ex. `u123456789_sentravail`) :
+   - nom de la base
+   - utilisateur
+   - mot de passe
 
-## 2. Créer l'application sur Hostinger
+## 2. Créer l'application
 
 1. hPanel → **Sites web** → **Créer un site** → **Web App**.
 2. **Importer un dépôt Git** → autoriser GitHub → choisir `aboufaty25/sentravail1`, branche `main`.
-3. Paramètres de build (vérifier ce que Hostinger a détecté) :
+3. Paramètres de build :
 
    | Réglage | Valeur |
    |---|---|
@@ -30,60 +29,68 @@ L'hébergement mutualisé ne fournit pas MongoDB : la base de données est sur *
    | Commande de build | `npm run build` |
    | Fichier d'entrée | `src/server.js` |
    | Commande de démarrage | `npm start` (si demandée) |
-   | Dossier de sortie | laisser vide / `public` si obligatoire |
 
 4. **Variables d'environnement**, à saisir dans Hostinger et **jamais** dans le code :
 
    | Variable | Valeur |
    |---|---|
    | `NODE_ENV` | `production` |
-   | `BASE_URL` | `https://sentravail.com` |
-   | `MONGODB_URI` | l'adresse Atlas de l'étape 1 |
+   | `BASE_URL` | `https://sentravail.com` (l'adresse du **site**) |
+   | `DB_HOST` | `127.0.0.1` (surtout **pas** `localhost`) |
+   | `DB_PORT` | `3306` |
+   | `DB_USER` | l'utilisateur MySQL, ex. `u123456789_sentravail` |
+   | `DB_PASSWORD` | le mot de passe MySQL |
+   | `DB_NAME` | le nom de la base, ex. `u123456789_sentravail` |
    | `SESSION_SECRET` | une longue chaîne aléatoire (voir ci-dessous) |
-   | `CLOUDINARY_CLOUD_NAME` / `_API_KEY` / `_API_SECRET` | phase 2, peut rester vide pour l'instant |
+   | `CLOUDINARY_CLOUD_NAME` / `_API_KEY` / `_API_SECRET` | phase 2, peuvent rester vides |
    | `ADSENSE_CLIENT_ID` | phase 6, peut rester vide |
+
+   Ne **pas** définir `PORT` : Hostinger le fournit.
 
    Pour générer `SESSION_SECRET`, sur n'importe quel ordinateur :
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-   Ne pas définir `PORT` : Hostinger le fournit.
 
-   Le **Database Connect Wizard** de Hostinger (tableau de bord Node.js) peut aussi remplir `MONGODB_URI` automatiquement depuis Atlas. Vérifier ensuite que le nom de la variable est bien `MONGODB_URI`.
-
-5. **Déployer**. Ensuite, chaque `git push` sur `main` redéploie automatiquement.
+5. **Déployer**. Ensuite, chaque `git push` sur `main` redéploie automatiquement. Après une modification des variables, cliquer sur **Restart**.
 
 ## 3. Domaine et HTTPS
 
-- Connecter `sentravail.com` à l'application (tableau de bord du site → Domaine) et activer le **SSL** (gratuit).
-- Le cookie de session est marqué `Secure` en production : le site **doit** être servi en HTTPS, sinon la connexion ne fonctionne pas.
+- Connecter `sentravail.com` à l'application et activer le **SSL** (gratuit).
+- Le cookie de session est marqué `Secure` en production : le site **doit** être servi en `https://`, sinon la connexion ne fonctionne pas.
 
 ## 4. Vérifier
 
 - `https://sentravail.com/healthz` doit répondre `{"status":"ok"}`.
+- Dans phpMyAdmin, les tables `users`, `user_trades`, `sessions` et `schema_migrations` doivent apparaître.
 - S'inscrire, modifier le profil, se déconnecter, se reconnecter.
-- En cas d'échec : tableau de bord → **Deployments** → journal du build, puis redémarrer avec **Restart**.
 
-| Symptôme | Cause probable |
+| Symptôme dans les logs | Cause probable |
 |---|---|
-| `MONGODB_URI must be set in production` dans les logs | variable manquante |
-| `[fatal] … querySrv` ou `timed out` | `0.0.0.0/0` absent dans Atlas *Network Access*, ou mot de passe erroné |
-| Connexion qui « ne tient pas » (retour à la page connexion) | site ouvert en `http://` au lieu de `https://` |
-| Page sans style | le build n'a pas tourné : `npm run build` doit figurer dans les paramètres |
+| `DB_… must be set in production` | variable manquante |
+| `Access denied for user …@'::1'` | `DB_HOST` vaut `localhost` : mettre `127.0.0.1` |
+| `Access denied for user …` | utilisateur ou mot de passe erroné (noms avec préfixe `u…_`) |
+| `ECONNREFUSED` | mauvais `DB_HOST` / `DB_PORT` |
+| Connexion qui « ne tient pas » | site ouvert en `http://` au lieu de `https://` |
+| Page sans style | `npm run build` absent des paramètres de build |
 
 ## 5. Données de démonstration (optionnel)
 
-Hostinger ne permet pas de lancer des commandes npm à la main. Pour remplir la base, lancer le seed **depuis ton ordinateur** en pointant vers Atlas :
+Hostinger ne permet pas de lancer des commandes npm à la main. Pour remplir la base depuis ton ordinateur :
 
-```bash
-MONGODB_URI="mongodb+srv://…/sentravail" npm run seed
-```
+1. hPanel → **Bases de données** → **MySQL distant** : ajouter **ton adresse IP** pour cette base, et noter le nom d'hôte distant (ex. `srv123.hstgr.io`).
+2. Sur ton ordinateur, dans le dossier du projet :
+   ```bash
+   DB_HOST=srv123.hstgr.io DB_USER=u123_sentravail DB_PASSWORD='…' DB_NAME=u123_sentravail npm run seed
+   ```
+3. Retirer ensuite ton IP de l'accès distant.
 
-Le seed crée des comptes de démo avec le mot de passe `demo1234`. Ne pas le faire sur la base de production une fois le site ouvert au public.
+Le seed crée des comptes de démo avec le mot de passe `demo1234`. Ne pas le lancer une fois le site ouvert au public.
 
 ## Notes techniques
 
-- `bcryptjs` (pur JavaScript) est utilisé à la place de `bcrypt` pour éviter toute compilation native sur l'hébergement.
-- `public/css/app.css` est versionné : le site garde son style même si l'étape de build est sautée. Après une modification du style, lancer `npm run build:css` avant de committer.
-- Les sessions sont stockées dans MongoDB (collection `sessions`), donc les redémarrages ne déconnectent personne.
-- Limites du mutualisé : CPU, RAM et nombre de processus limités. Les vidéos ne passeront **jamais** par le serveur : elles iront directement du téléphone vers Cloudinary (phase 2).
+- Migrations : `src/db/migrations.js`. Elles sont appliquées au démarrage et suivies dans la table `schema_migrations`. Pour faire évoluer le schéma, on **ajoute** une migration, on ne modifie jamais une migration déjà déployée.
+- Pool MySQL limité à 5 connexions (limite du mutualisé).
+- `bcryptjs` est en pur JavaScript, sans compilation native sur l'hébergement.
+- `public/css/app.css` est versionné : après une modification des vues ou du style, lancer `npm run build:css` avant de committer.
+- Les vidéos ne passeront **jamais** par le serveur : elles iront directement du téléphone vers Cloudinary (phase 2).

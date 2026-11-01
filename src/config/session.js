@@ -1,7 +1,26 @@
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
-const mongoose = require('mongoose');
+const MySQLStoreFactory = require('express-mysql-session');
 const env = require('./env');
+const db = require('../db');
+
+const MAX_AGE = 1000 * 60 * 60 * 24 * 30; // 30 days
+
+function createStore() {
+  // Sessions live in MySQL so that restarts don't log anyone out.
+  // Without a MySQL pool (tests on SQLite) fall back to the in-memory store.
+  if (db.dialect !== 'mysql') return undefined;
+  const MySQLStore = MySQLStoreFactory(session);
+  return new MySQLStore(
+    {
+      createDatabaseTable: true,
+      clearExpired: true,
+      checkExpirationInterval: 15 * 60 * 1000,
+      expiration: MAX_AGE,
+      endConnectionOnClose: false,
+    },
+    db.adapter.pool
+  );
+}
 
 function sessionMiddleware() {
   return session({
@@ -10,18 +29,12 @@ function sessionMiddleware() {
     resave: false,
     saveUninitialized: false,
     rolling: true,
-    // Tests without a database use the default in-memory store.
-    store: env.useMemorySessions ? undefined : MongoStore.create({
-      client: mongoose.connection.getClient(),
-      collectionName: 'sessions',
-      ttl: 60 * 60 * 24 * 30, // 30 days
-      touchAfter: 60 * 60 * 24,
-    }),
+    store: createStore(),
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
       secure: env.isProd,
-      maxAge: 1000 * 60 * 60 * 24 * 30,
+      maxAge: MAX_AGE,
     },
   });
 }

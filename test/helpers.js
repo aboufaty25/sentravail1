@@ -1,58 +1,39 @@
-// Test harness. With TEST_MONGODB_URI set, tests hit a real MongoDB.
-// Otherwise the User model's persistence methods are replaced by an in-memory store,
-// so the HTTP flows (routes, validation, CSRF, sessions, views) can still be exercised.
+// Test harness: an in-memory SQLite database by default, or a real MySQL database when
+// TEST_DB_NAME is set (with TEST_DB_HOST / TEST_DB_PORT / TEST_DB_USER / TEST_DB_PASSWORD).
+// Tests only touch accounts whose phone starts with +22178999.
 process.env.NODE_ENV = 'test';
 process.env.SESSION_SECRET = 'test-secret';
-if (process.env.TEST_MONGODB_URI) process.env.MONGODB_URI = process.env.TEST_MONGODB_URI;
+process.env.DOTENV_CONFIG_QUIET = 'true';
 
-const mongoose = require('mongoose');
-const User = require('../src/models/User');
-const { createApp } = require('../src/app');
+const db = require('../src/db');
+const { migrate } = require('../src/db/migrations');
+const { createMysqlAdapter } = require('../src/db/mysql');
+const { createSqliteAdapter } = require('./sqlite-adapter');
 
-const realDb = Boolean(process.env.TEST_MONGODB_URI);
-const store = new Map();
-
-function matches(doc, filter) {
-  return Object.entries(filter).every(([k, v]) => (v instanceof RegExp ? v.test(doc[k]) : doc[k] === v));
-}
-
-function installMemoryStore() {
-  const hydrate = (raw) => (raw ? User.hydrate(raw) : null);
-  const query = (raw) => {
-    const p = Promise.resolve(hydrate(raw));
-    p.select = () => p;
-    return p;
-  };
-  User.findById = (id) => query(store.get(String(id)));
-  User.findOne = (filter) => query([...store.values()].find((d) => matches(d, filter)));
-  User.exists = async (filter) => ([...store.values()].some((d) => matches(d, filter)) ? { _id: 1 } : null);
-  User.prototype.save = async function save() {
-    await this.validate();
-    const raw = this.toObject({ virtuals: false });
-    const clash = [...store.values()].find((d) => d.phone === raw.phone && String(d._id) !== String(raw._id));
-    if (clash) throw Object.assign(new Error('duplicate key'), { code: 11000 });
-    store.set(String(raw._id), raw);
-    this.isNew = false;
-    return this;
-  };
-}
+const realMysql = Boolean(process.env.TEST_DB_NAME);
 
 async function setup() {
-  if (realDb) {
-    await mongoose.connect(process.env.MONGODB_URI);
-    await User.deleteMany({ phone: /^\+22178999/ });
+  if (realMysql) {
+    db.use(createMysqlAdapter({
+      host: process.env.TEST_DB_HOST || '127.0.0.1',
+      port: Number(process.env.TEST_DB_PORT) || 3306,
+      user: process.env.TEST_DB_USER || 'root',
+      password: process.env.TEST_DB_PASSWORD || '',
+      database: process.env.TEST_DB_NAME,
+    }));
   } else {
-    installMemoryStore();
+    db.use(createSqliteAdapter());
   }
+  await migrate(db, { log: () => {} });
+  await db.run("DELETE FROM users WHERE phone LIKE '+22178999%'");
+  // Required after db.use(): the session store depends on the dialect.
+  const { createApp } = require('../src/app');
   return createApp();
 }
 
 async function teardown() {
-  if (realDb) {
-    await User.deleteMany({ phone: /^\+22178999/ });
-    await mongoose.disconnect();
-  }
-  store.clear();
+  await db.run("DELETE FROM users WHERE phone LIKE '+22178999%'");
+  await db.close();
 }
 
 // Extract the CSRF token from a rendered form.
@@ -62,4 +43,4 @@ function csrfFrom(html) {
   return m[1];
 }
 
-module.exports = { setup, teardown, csrfFrom, realDb };
+module.exports = { setup, teardown, csrfFrom, realMysql };

@@ -28,17 +28,21 @@ exports.register = async (req, res) => {
       title: 'Créer un compte', values: req.body, errors, noAds: true,
     });
   }
-  if (await User.exists({ phone: data.phone })) {
-    return res.status(422).render('pages/auth/register', {
+  const duplicate = () =>
+    res.status(422).render('pages/auth/register', {
       title: 'Créer un compte',
       values: req.body,
       errors: { phone: 'Ce numéro a déjà un compte. Connecte-toi.' },
       noAds: true,
     });
+  if (await User.existsByPhone(data.phone)) return duplicate();
+  let user;
+  try {
+    user = await User.create({ name: data.name, phone: data.phone, password: data.password, role: data.role, whatsapp: data.phone });
+  } catch (err) {
+    if (err.code === 'DUPLICATE') return duplicate(); // lost a race with a concurrent sign-up
+    throw err;
   }
-  const user = new User({ name: data.name, phone: data.phone, role: data.role, whatsapp: data.phone });
-  await user.setPassword(data.password);
-  await user.save();
   await logIn(req, user);
   req.flash('success', 'Bienvenue sur SenTravail ! Complète ton profil.');
   res.redirect('/profil/modifier');
@@ -55,9 +59,9 @@ exports.login = async (req, res) => {
       title: 'Connexion', values: { phone: req.body.phone }, errors: { _form: msg, ...(errors || {}) }, noAds: true,
     });
   if (errors) return fail('Vérifie les champs.');
-  const user = await User.findOne({ phone: data.phone }).select('+passwordHash');
+  const user = await User.findByPhone(data.phone);
   // Same message whether the phone or the password is wrong.
-  if (!user || !(await user.checkPassword(data.password))) {
+  if (!user || !(await User.checkPassword(user, data.password))) {
     return fail('Numéro ou mot de passe incorrect.');
   }
   const returnTo = await logIn(req, user);

@@ -1,6 +1,6 @@
 const path = require('path');
 const express = require('express');
-const mongoose = require('mongoose');
+const db = require('./db');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
@@ -60,9 +60,13 @@ function createApp() {
   );
 
   // Health check for the host (no session, no CSRF): 200 when the database is reachable.
-  app.get('/healthz', (req, res) => {
-    const ok = mongoose.connection.readyState === 1 || env.useMemorySessions;
-    res.status(ok ? 200 : 503).json({ status: ok ? 'ok' : 'db-down' });
+  app.get('/healthz', async (req, res) => {
+    try {
+      await db.ping();
+      res.json({ status: 'ok' });
+    } catch {
+      res.status(503).json({ status: 'db-down' });
+    }
   });
 
   app.use(express.urlencoded({ extended: false, limit: '50kb' }));

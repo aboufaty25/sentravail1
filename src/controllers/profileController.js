@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const User = require('../models/User');
 const { profileSchema, parse } = require('../utils/validation');
 const { TRADES } = require('../config/trades');
@@ -7,7 +6,7 @@ const { formatSenegalPhone } = require('../utils/phone');
 
 exports.show = async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.isValidObjectId(id)) return next();
+  if (!/^\d{1,10}$/.test(id)) return next();
   const profile = await User.findById(id);
   if (!profile) return next(); // -> 404
   const isOwner = req.user && req.user.id === profile.id;
@@ -48,7 +47,7 @@ exports.update = async (req, res) => {
     const values = { ...req.body, trades: [].concat(req.body.trades || []) };
     return res.status(422).render('pages/profile/edit', editLocals(req.user, { values, errors }));
   }
-  Object.assign(req.user, {
+  await User.updateProfile(req.user.id, {
     name: data.name,
     bio: data.bio,
     trades: data.trades,
@@ -56,7 +55,6 @@ exports.update = async (req, res) => {
     neighborhood: data.neighborhood,
     whatsapp: data.whatsapp || req.user.phone,
   });
-  await req.user.save();
   req.flash('success', 'Profil mis à jour.');
   res.redirect(`/@${req.user.id}`);
 };

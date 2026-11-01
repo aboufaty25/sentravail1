@@ -24,7 +24,7 @@ test('public pages render', async () => {
   }
   await request(app).get('/nexiste-pas').expect(404);
   await request(app).get('/@not-an-id').expect(404);
-  await request(app).get('/@000000000000000000000000').expect(404);
+  await request(app).get('/@999999').expect(404);
 });
 
 test('anonymous homepage does not create a session cookie', async () => {
@@ -79,7 +79,7 @@ test('register → edit profile → logout → login', async () => {
   });
   assert.equal(upd.status, 302);
   const profileUrl = upd.headers.location;
-  assert.match(profileUrl, /^\/@[a-f0-9]{24}$/);
+  assert.match(profileUrl, /^\/@\d+$/);
 
   const own = await agent.get(profileUrl).expect(200);
   assert.match(own.text, /Moussa Diop/);

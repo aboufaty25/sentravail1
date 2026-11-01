@@ -1,11 +1,10 @@
-const mongoose = require('mongoose');
 const User = require('../models/User');
 
 // Attach the logged-in user (if any) to req.user and res.locals.currentUser.
 async function loadUser(req, res, next) {
   res.locals.currentUser = null;
   const id = req.session && req.session.userId;
-  if (!id || !mongoose.isValidObjectId(id)) return next();
+  if (!id) return next();
   const user = await User.findById(id);
   if (!user) {
     delete req.session.userId;
