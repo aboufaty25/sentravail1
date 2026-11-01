@@ -12,9 +12,14 @@ npm run dev               # http://localhost:3000
 ```
 
 - `npm run dev` : nodemon + watch Tailwind
-- `npm start` : production (compile le CSS puis lance le serveur)
+- `npm run build` : compile le CSS (Tailwind)
+- `npm start` : production
 - `npm run seed` : données de démonstration (refusé en production sans `--force`)
 - `npm test` : tests HTTP (inscription, connexion, CSRF, profil). Sans base, un magasin mémoire remplace MongoDB ; avec `TEST_MONGODB_URI=mongodb://…` les mêmes tests tournent sur une vraie base.
+
+## Déploiement
+
+Hostinger (plan Business, Web App Node.js) + MongoDB Atlas : voir [DEPLOIEMENT.md](DEPLOIEMENT.md).
 
 ## Avancement
 

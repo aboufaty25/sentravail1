@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { TRADE_SLUGS } = require('../config/trades');
 
-const BCRYPT_ROUNDS = 12;
+const BCRYPT_ROUNDS = 11;
 
 const pointSchema = new mongoose.Schema(
   {

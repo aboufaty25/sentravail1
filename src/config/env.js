@@ -4,7 +4,8 @@ const isProd = process.env.NODE_ENV === 'production';
 
 const env = {
   isProd,
-  port: Number(process.env.PORT) || 3000,
+  // Hostinger (Passenger) may pass a socket path instead of a number: keep it as-is.
+  port: process.env.PORT || 3000,
   baseUrl: (process.env.BASE_URL || 'http://localhost:3000').replace(/\/$/, ''),
   mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sentravail',
   sessionSecret: process.env.SESSION_SECRET,
@@ -16,6 +17,12 @@ if (!env.sessionSecret || env.sessionSecret === 'change-me') {
     throw new Error('SESSION_SECRET must be set in production');
   }
   env.sessionSecret = 'dev-only-insecure-secret';
+}
+
+if (isProd) {
+  for (const key of ['MONGODB_URI', 'BASE_URL']) {
+    if (!process.env[key]) throw new Error(`${key} must be set in production`);
+  }
 }
 
 module.exports = env;

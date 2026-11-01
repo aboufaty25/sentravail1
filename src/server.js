@@ -6,7 +6,7 @@ async function main() {
   await connectDb();
   const app = createApp();
   const server = app.listen(env.port, () => {
-    console.log(`[http] SenTravail on ${env.baseUrl} (port ${env.port})`);
+    console.log(`[http] SenTravail on ${env.baseUrl} (listening on ${env.port})`);
   });
 
   const shutdown = (signal) => {

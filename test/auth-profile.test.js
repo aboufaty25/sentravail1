@@ -120,3 +120,9 @@ test('user content is HTML-escaped', async () => {
   assert.match(prof.text, /&lt;script&gt;/);
   assert.match(prof.text, /Recruteur/);
 });
+
+test('health check responds without a session', async () => {
+  const res = await request(app).get('/healthz').expect(200);
+  assert.equal(res.body.status, 'ok');
+  assert.equal(res.headers['set-cookie'], undefined);
+});
