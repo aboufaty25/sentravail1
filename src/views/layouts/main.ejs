@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= title ? `${title} · SenTravail` : 'SenTravail — Montre ce que tu sais faire' %></title>
+  <meta name="description" content="<%= description || 'Trouve un maçon, une couturière, un mécanicien près de chez toi au Sénégal. Les travailleurs montrent leur savoir-faire en vidéo et se contactent sur WhatsApp.' %>">
+  <meta name="theme-color" content="#00853f">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen pb-20">
+  <%- include('../partials/header') %>
+  <main class="mx-auto max-w-xl px-4 pt-4">
+    <%- include('../partials/flash') %>
+    <%- body %>
+  </main>
+  <%- include('../partials/footer') %>
+  <%- include('../partials/bottom-nav') %>
+</body>
+</html>

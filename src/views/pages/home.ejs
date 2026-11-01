@@ -1,0 +1,29 @@
+<section class="pt-4 text-center">
+  <p class="mb-2 inline-block rounded-full bg-sun-400/40 px-3 py-1 text-xs font-semibold text-slate-800">🇸🇳 Emplois et petits boulots au Sénégal</p>
+  <h1 class="text-3xl font-extrabold leading-tight">Montre ce que<br><span class="text-brand-600">tu sais faire.</span></h1>
+  <p class="mx-auto mt-3 max-w-sm text-slate-600">Filme ton travail, fais-toi recommander par tes clients, et reçois des demandes directement sur WhatsApp.</p>
+  <div class="mt-6 grid gap-3">
+    <% if (currentUser) { %>
+      <a href="/@<%= currentUser.id %>" class="btn-primary">Voir mon profil</a>
+    <% } else { %>
+      <a href="/inscription?role=worker" class="btn-primary">Je cherche du travail</a>
+      <a href="/inscription?role=recruiter" class="btn-outline">Je cherche un travailleur</a>
+    <% } %>
+  </div>
+</section>
+
+<section class="mt-10">
+  <h2 class="mb-3 text-lg font-bold">Les métiers</h2>
+  <ul class="grid grid-cols-2 gap-2">
+    <% trades.forEach(function (t) { %>
+      <li class="card flex items-center gap-2 p-3 text-sm font-medium"><span class="text-xl" aria-hidden="true"><%= t.icon %></span><%= t.label %></li>
+    <% }) %>
+  </ul>
+</section>
+
+<section class="mt-10 grid gap-3">
+  <h2 class="text-lg font-bold">Comment ça marche ?</h2>
+  <div class="card"><p class="font-semibold">1. Crée ton profil</p><p class="text-sm text-slate-600">Avec ton numéro de téléphone, en une minute.</p></div>
+  <div class="card"><p class="font-semibold">2. Montre ton travail</p><p class="text-sm text-slate-600">Une vidéo, une photo ou un vocal en wolof ou en français.</p></div>
+  <div class="card"><p class="font-semibold">3. Sois contacté sur WhatsApp</p><p class="text-sm text-slate-600">Les clients t'écrivent directement. Pas d'intermédiaire.</p></div>
+</section>

@@ -1,0 +1,7 @@
+<%# locals: user, size (tailwind size classes) %>
+<% const cls = locals.size || 'h-12 w-12 text-base'; %>
+<% if (user.avatarUrl) { %>
+  <img src="<%= user.avatarUrl %>" alt="" loading="lazy" class="<%= cls %> shrink-0 rounded-full object-cover">
+<% } else { %>
+  <span class="<%= cls %> grid shrink-0 place-items-center rounded-full bg-brand-100 font-bold text-brand-700" aria-hidden="true"><%= user.initials %></span>
+<% } %>

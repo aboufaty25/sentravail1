@@ -1,0 +1,4 @@
+<% const flashStyles = { success: 'bg-brand-50 text-brand-900 border-brand-100', error: 'bg-red-50 text-red-800 border-red-100', info: 'bg-slate-50 text-slate-800 border-slate-200' }; %>
+<% flash.forEach(function (f) { %>
+  <div role="status" class="mb-4 rounded-xl border px-4 py-3 text-sm <%= flashStyles[f.type] || flashStyles.info %>"><%= f.message %></div>
+<% }) %>

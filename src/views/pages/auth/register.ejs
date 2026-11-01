@@ -1,0 +1,46 @@
+<h1 class="mb-1 text-2xl font-extrabold">Créer un compte</h1>
+<p class="mb-6 text-sm text-slate-600">Déjà inscrit ? <a href="/connexion" class="font-semibold text-brand-700">Connexion</a></p>
+
+<form method="post" action="/inscription" class="grid gap-4" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+
+  <fieldset>
+    <legend class="label">Je suis…</legend>
+    <div class="grid grid-cols-2 gap-2">
+      <% [['worker', '👷 Travailleur', 'Je propose mes services'], ['recruiter', '🏠 Recruteur', 'Je cherche quelqu\'un']].forEach(function (r) { %>
+        <label class="card flex cursor-pointer flex-col gap-1 p-3 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+          <span class="flex items-center gap-2 font-semibold">
+            <input type="radio" name="role" value="<%= r[0] %>" class="accent-brand-600" <%= (values.role || 'worker') === r[0] ? 'checked' : '' %>>
+            <%= r[1] %>
+          </span>
+          <span class="text-xs text-slate-500"><%= r[2] %></span>
+        </label>
+      <% }) %>
+    </div>
+    <%- include('../../partials/field-error', { name: 'role' }) %>
+  </fieldset>
+
+  <div>
+    <label for="name" class="label">Nom complet</label>
+    <input id="name" name="name" class="field <%= errors.name ? 'field-error' : '' %>" value="<%= values.name || '' %>" autocomplete="name" required maxlength="60">
+    <%- include('../../partials/field-error', { name: 'name' }) %>
+  </div>
+
+  <div>
+    <label for="phone" class="label">Numéro de téléphone</label>
+    <div class="flex">
+      <span class="grid place-items-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 px-3 text-slate-600">+221</span>
+      <input id="phone" name="phone" type="tel" inputmode="tel" class="field rounded-l-none <%= errors.phone ? 'field-error' : '' %>" value="<%= values.phone || '' %>" placeholder="77 123 45 67" autocomplete="tel-national" required>
+    </div>
+    <%- include('../../partials/field-error', { name: 'phone' }) %>
+  </div>
+
+  <div>
+    <label for="password" class="label">Mot de passe</label>
+    <input id="password" name="password" type="password" class="field <%= errors.password ? 'field-error' : '' %>" autocomplete="new-password" minlength="6" required>
+    <%- include('../../partials/field-error', { name: 'password' }) %>
+  </div>
+
+  <button class="btn-primary mt-2">Créer mon compte</button>
+  <p class="text-center text-xs text-slate-500">En créant un compte, tu acceptes les <a href="/conditions" class="underline">conditions</a> et la <a href="/confidentialite" class="underline">politique de confidentialité</a>.</p>
+</form>

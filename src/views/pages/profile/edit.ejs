@@ -1,0 +1,60 @@
+<h1 class="mb-6 text-2xl font-extrabold">Modifier mon profil</h1>
+
+<form method="post" action="/profil/modifier" class="grid gap-5" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+
+  <div>
+    <label for="name" class="label">Nom complet</label>
+    <input id="name" name="name" class="field <%= errors.name ? 'field-error' : '' %>" value="<%= values.name || '' %>" required maxlength="60">
+    <%- include('../../partials/field-error', { name: 'name' }) %>
+  </div>
+
+  <fieldset>
+    <legend class="label">Mes métiers <span class="font-normal text-slate-500">(3 maximum)</span></legend>
+    <div class="grid grid-cols-2 gap-2">
+      <% trades.forEach(function (t) { %>
+        <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+          <input type="checkbox" name="trades" value="<%= t.slug %>" class="accent-brand-600" <%= (values.trades || []).includes(t.slug) ? 'checked' : '' %>>
+          <span aria-hidden="true"><%= t.icon %></span><%= t.label %>
+        </label>
+      <% }) %>
+    </div>
+    <%- include('../../partials/field-error', { name: 'trades' }) %>
+  </fieldset>
+
+  <div>
+    <label for="bio" class="label">Présentation</label>
+    <textarea id="bio" name="bio" rows="4" maxlength="500" class="field <%= errors.bio ? 'field-error' : '' %>" placeholder="Ex. : Maçon depuis 10 ans, je fais carrelage, dalles et finitions. Je travaille à Pikine et environs."><%= values.bio || '' %></textarea>
+    <%- include('../../partials/field-error', { name: 'bio' }) %>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label for="city" class="label">Ville</label>
+      <select id="city" name="city" class="field <%= errors.city ? 'field-error' : '' %>">
+        <option value="">—</option>
+        <% cities.forEach(function (c) { %><option value="<%= c.slug %>" <%= values.city === c.slug ? 'selected' : '' %>><%= c.name %></option><% }) %>
+      </select>
+      <%- include('../../partials/field-error', { name: 'city' }) %>
+    </div>
+    <div>
+      <label for="neighborhood" class="label">Quartier</label>
+      <input id="neighborhood" name="neighborhood" class="field" value="<%= values.neighborhood || '' %>" maxlength="60" placeholder="Ex. : Thiaroye">
+      <%- include('../../partials/field-error', { name: 'neighborhood' }) %>
+    </div>
+  </div>
+
+  <div>
+    <label for="whatsapp" class="label">Numéro WhatsApp <span class="font-normal text-slate-500">(si différent)</span></label>
+    <div class="flex">
+      <span class="grid place-items-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 px-3 text-slate-600">+221</span>
+      <input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" class="field rounded-l-none <%= errors.whatsapp ? 'field-error' : '' %>" value="<%= values.whatsapp || '' %>" placeholder="77 123 45 67">
+    </div>
+    <%- include('../../partials/field-error', { name: 'whatsapp' }) %>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <a href="/profil" class="btn-outline">Annuler</a>
+    <button class="btn-primary">Enregistrer</button>
+  </div>
+</form>

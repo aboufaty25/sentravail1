@@ -1,0 +1,23 @@
+<h1 class="mb-1 text-2xl font-extrabold">Connexion</h1>
+<p class="mb-6 text-sm text-slate-600">Pas encore de compte ? <a href="/inscription" class="font-semibold text-brand-700">Inscris-toi</a></p>
+
+<% if (errors._form) { %>
+  <div role="alert" class="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800"><%= errors._form %></div>
+<% } %>
+
+<form method="post" action="/connexion" class="grid gap-4" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+  <div>
+    <label for="phone" class="label">Numéro de téléphone</label>
+    <div class="flex">
+      <span class="grid place-items-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 px-3 text-slate-600">+221</span>
+      <input id="phone" name="phone" type="tel" inputmode="tel" class="field rounded-l-none <%= errors.phone ? 'field-error' : '' %>" value="<%= values.phone || '' %>" placeholder="77 123 45 67" autocomplete="tel-national" required>
+    </div>
+    <%- include('../../partials/field-error', { name: 'phone' }) %>
+  </div>
+  <div>
+    <label for="password" class="label">Mot de passe</label>
+    <input id="password" name="password" type="password" class="field" autocomplete="current-password" required>
+  </div>
+  <button class="btn-primary mt-2">Se connecter</button>
+</form>
